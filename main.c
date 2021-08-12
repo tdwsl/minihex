@@ -11,6 +11,7 @@
 #define MAX_TEAMS 8
 #define PI 3.14159
 #define STROBE (SDL_GetTicks()/3)
+#define ACTIONMENU_LEN 5
 
 struct unit {
 	int x, y, px, py;
@@ -49,6 +50,12 @@ const int unitRanges[] = {
 	2, 4, 2, 6,
 	2, 2, 2,
 };
+int currentTeam = 0;
+typedef enum {
+	ACTION_NOACTION,
+	ACTION_SETTLE,
+} t_action;
+int actionMenu[5] = {ACTION_NOACTION};
 
 void initSDL() {
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -333,6 +340,21 @@ int unitAt(int x, int y) {
 	return -1;
 }
 
+void updateActionMenu() {
+	for(int i = 0; i < ACTIONMENU_LEN; i++)
+		actionMenu[i] = ACTION_NOACTION;
+	if(selectedUnit == -1)
+		return;
+
+	switch(units[selectedUnit]->type) {
+	case 8:
+		if(units[selectedUnit]->moves > 0
+				&& map[cursorY*mapW+cursorX] == 1)
+			actionMenu[0] = ACTION_SETTLE;
+		break;
+	}
+}
+
 void updateVmap() {
 	for(int i = 0; i < mapW*mapH; i++)
 		vmap[i] = false;
@@ -421,10 +443,14 @@ void click() {
 				units[oldUnit]->progress = 0;
 				cursor = false;
 			}
+		if(selectedUnit != -1)
+			if(units[selectedUnit]->team != currentTeam)
+				selectedUnit = -1;
 	}
 	else
 		selectedUnit = -1;
 	updateVmap();
+	updateActionMenu();
 }
 
 void updateBounce() {
